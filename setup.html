@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>挪车二维码生成器</title>
+    <style>
+        :root {
+            --primary: #4A90D9;
+            --primary-dark: #357ABD;
+            --success: #27AE60;
+            --danger: #E74C3C;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border: #e1e8ed;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #4A90D9, #357ABD);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        /* 左侧设置面板 */
+        .settings-panel {
+            flex: 1;
+            min-width: 320px;
+            max-width: 500px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title .icon {
+            font-size: 20px;
+        }
+
+        /* 表单 */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="url"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            background: #fafbfc;
+            color: var(--text);
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+        }
+
+        .form-group .input-hint {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        /* 文件上传 */
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fafbfc;
+            position: relative;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: #f0f6ff;
+        }
+
+        .file-upload-area.has-file {
+            border-color: var(--success);
+            border-style: solid;
+            background: #f0faf4;
+        }
+
+        .file-upload-area .upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .file-upload-area .upload-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .file-upload-area .upload-filename {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 6px;
+            word-break: break-all;
+        }
+
+        .file-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* 预览图片 */
+        .preview-thumb {
+            width: 100%;
+            height: 80px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid var(--border);
+        }
+
+        .preview-thumb.show {
+            display: block;
+        }
+
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4A90D9, #357ABD);
+            color: #fff;
+            width: 100%;
+            padding: 14px 24px;
+            font-size: 16px;
+            box-shadow: 0 4px 14px rgba(74, 144, 217, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(74, 144, 217, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-small {
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        /* 右侧预览面板 */
+        .preview-panel {
+            flex: 1;
+            min-width: 320px;
+            max-width: 450px;
+            position: sticky;
+            top: 20px;
+            align-self: flex-start;
+        }
+
+        .preview-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .preview-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* 二维码区域 */
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+        }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+        }
+
+        #qrcode img,
+        #qrcode canvas {
+            border-radius: 8px;
+        }
+
+        .qr-placeholder {
+            color: #ccc;
+            font-size: 14px;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        /* URL 显示 */
+        .url-display {
+            margin-top: 16px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            padding: 12px;
+            word-break: break-all;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            max-height: 80px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .url-display .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+
+        /* 二维码操作按钮 */
+        .qr-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .qr-actions .btn {
+            flex: 1;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        /* 手机预览 */
+        .phone-preview {
+            width: 220px;
+            height: 400px;
+            margin: 20px auto;
+            border: 4px solid #333;
+            border-radius: 26px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .phone-preview .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 20px;
+            background: #333;
+            border-radius: 0 0 14px 14px;
+            z-index: 10;
+        }
+
+        .phone-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 22px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .preview-panel {
+                position: static;
+                max-width: 100%;
+            }
+
+            .settings-panel {
+                max-width: 100%;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <div class="header">
+        <h1>🚗 挪车二维码生成器</h1>
+        <p>自定义设置，生成专属挪车二维码</p>
+    </div>
+
+    <div class="main-layout">
+        <!-- 左侧：设置面板 -->
+        <div class="settings-panel">
+            <!-- 基本信息 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">📱</span> 基本信息
+                </div>
+                <div class="form-group">
+                    <label>车主手机号码 *</label>
+                    <input type="text" id="phoneInput" placeholder="请输入手机号码" maxlength="15" value="">
+                    <span class="input-hint">扫描二维码的人将拨打此号码</span>
+                </div>
+            </div>
+
+            <!-- 背景设置 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">🖼️</span> 页面背景（可选）
+                </div>
+                <div class="form-group">
+                    <label>上传背景图片</label>
+                    <div class="file-upload-area" id="bgUploadArea">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">点击上传背景图片</div>
+                        <div class="upload-filename" id="bgFileName"></div>
+                        <input type="file" id="bgFileInput" accept="image/*">
+                    </div>
+                    <div class="preview-thumb" id="bgPreview"></div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>或输入背景图片URL</label>
+                    <input type="url" id="bgUrlInput" placeholder="https://example.com/bg.jpg">
+                </div>
+            </div>
+
+            <!-- 音乐设置 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">🎵</span> 背景音乐（可选）
+                </div>
+                <div class="form-group">
+                    <label>上传音乐文件</label>
+                    <div class="file-upload-area" id="musicUploadArea">
+                        <div class="upload-icon">🎶</div>
+                        <div class="upload-text">点击上传音乐文件 (MP3)</div>
+                        <div class="upload-filename" id="musicFileName"></div>
+                        <input type="file" id="musicFileInput" accept="audio/mpeg,audio/mp3,.mp3">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>或输入音乐文件URL</label>
+                    <input type="url" id="musicUrlInput" placeholder="https://example.com/music.mp3">
+                    <span class="input-hint">留空则播放内置《听我说谢谢你》旋律</span>
+                </div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button class="btn btn-primary" id="generateBtn" onclick="generateQR()">
+                ✨ 生成挪车二维码
+            </button>
+
+            <!-- 打包按钮 -->
+            <button class="btn btn-primary" id="packBtn" onclick="downloadPackagedHTML()"
+                    style="margin-top:12px; background: linear-gradient(135deg, #e67e22, #d35400); box-shadow: 0 4px 14px rgba(230, 126, 34, 0.3);">
+                📦 下载自包含展示页（含背景+音乐）
+            </button>
+            <span style="display:block; text-align:center; font-size:11px; color:#888; margin-top:6px;">
+                将上传的图片和音乐嵌入HTML → 替换服务器上的 index.html → 扫码可见
+            </span>
+
+            <!-- 部署说明 -->
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-title">
+                    <span class="icon">📋</span> 使用流程
+                </div>
+                <div style="font-size: 13px; color: #666; line-height: 1.8;">
+                    <p><strong>1.</strong> 填写手机号，上传背景图和背景音乐</p>
+                    <p><strong>2.</strong> 点击「<strong>📦 下载自包含展示页</strong>」，获得嵌入了图片和音乐的 index.html</p>
+                    <p><strong>3.</strong> 将该 index.html 和 setup.html 一起部署到服务器</p>
+                    <p><strong>4.</strong> 点击「✨ 生成挪车二维码」，下载二维码打印贴车上</p>
+                    <p style="margin-top: 8px; padding: 10px; background: #e8f5e9; border-radius: 8px; font-size: 12px; color: #2e7d32;">
+                        ✅ <strong>扫码即可看到：</strong>自包含的 index.html 已将背景图和音乐嵌入其中，任何人扫码都能看到自定义背景和听到音乐！
+                    </p>
+                    <p style="margin-top: 8px; padding: 10px; background: #fff8e1; border-radius: 8px; font-size: 12px; color: #f57c00;">
+                        ⚠️ <strong>部署要求：</strong>文件需部署到公网才能被手机扫描<br>
+                        推荐：GitHub Pages（免费）/ 腾讯云静态网站托管 / 任意静态服务器
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：预览面板 -->
+        <div class="preview-panel">
+            <!-- 二维码 -->
+            <div class="preview-card">
+                <div class="preview-title">📱 扫描二维码查看效果</div>
+                <div class="qr-container">
+                    <div id="qrcode">
+                        <div class="qr-placeholder">请填写手机号并点击生成</div>
+                    </div>
+                </div>
+                <div class="url-display" id="urlDisplay" style="display:none;">
+                    <span id="generatedUrl"></span>
+                    <button class="btn btn-small btn-secondary copy-btn" onclick="copyUrl()">复制</button>
+                </div>
+                <div class="qr-actions" id="qrActions" style="display:none;">
+                    <button class="btn btn-secondary" onclick="downloadQR()">💾 下载二维码</button>
+                    <button class="btn btn-secondary" onclick="copyUrl()">📋 复制链接</button>
+                </div>
+            </div>
+
+            <!-- 手机预览 -->
+            <div class="preview-card">
+                <div class="preview-title">📲 页面预览</div>
+                <div class="phone-preview">
+                    <div class="phone-notch"></div>
+                    <iframe id="previewFrame" src="about:blank"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
+    </script>
+
+    <!-- 内嵌的展示页模板（打包下载时使用，__EMBED_DATA__ 会被替换为实际配置 JSON） -->
+    <!-- 使用 textarea 装模板，可安全包含 <script>...</script> 等嵌套标签不被 HTML 解析器误识别 -->
+    <textarea id="indexTemplate" style="display:none"><!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>临时停靠</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #333;
+            --accent: #e74c3c;
+            --accent2: #f39c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 30%, #16213e 60%, #0f3460 100%);
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.8), transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.6), transparent),
+                radial-gradient(2px 2px at 160px 30px, #ddd, transparent),
+                radial-gradient(1px 1px at 200px 60px, rgba(255, 255, 255, 0.7), transparent),
+                radial-gradient(2px 2px at 250px 20px, #fff, transparent),
+                radial-gradient(1px 1px at 300px 75px, rgba(255, 255, 255, 0.5), transparent),
+                radial-gradient(2px 2px at 40px 120px, #eee, transparent),
+                radial-gradient(1px 1px at 80px 150px, rgba(255, 255, 255, 0.8), transparent),
+                radial-gradient(2px 2px at 170px 140px, #fff, transparent),
+                radial-gradient(1px 1px at 220px 110px, rgba(255, 255, 255, 0.6), transparent),
+                radial-gradient(2px 2px at 280px 130px, #ddd, transparent),
+                radial-gradient(1px 1px at 320px 160px, rgba(255, 255, 255, 0.7), transparent);
+            background-size: 360px 200px;
+            z-index: -1;
+            animation: twinkle 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .custom-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -3;
+        }
+
+        .custom-bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: -2;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 400px;
+            z-index: 10;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .car-icon-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .car-icon {
+            font-size: 64px;
+            display: inline-block;
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 36px 28px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #e74c3c, #f39c12);
+            margin: 0 auto 24px;
+            border-radius: 2px;
+        }
+
+        .call-btn-wrapper {
+            margin: 20px 0 10px;
+        }
+
+        .call-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 280px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(46, 125, 50, 0.4);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .call-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+            border-radius: 50px;
+        }
+
+        .call-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .call-btn .phone-icon {
+            font-size: 22px;
+            animation: ring 1.5s ease-in-out infinite;
+        }
+
+        @keyframes ring {
+            0%, 100% { transform: rotate(0); }
+            10% { transform: rotate(15deg); }
+            20% { transform: rotate(-15deg); }
+            30% { transform: rotate(10deg); }
+            40% { transform: rotate(-10deg); }
+            50% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            70% { transform: rotate(0); }
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 16px;
+            letter-spacing: 1px;
+        }
+
+        .music-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .music-toggle:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .music-toggle.playing {
+            animation: musicPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes musicPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            50% { box-shadow: 0 0 0 12px rgba(255, 255, 255, 0); }
+        }
+
+        .music-notes {
+            position: fixed;
+            top: 20px;
+            right: 70px;
+            z-index: 99;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .music-notes.show { opacity: 1; }
+
+        .note {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            animation: noteFloat 2s ease-in-out infinite;
+        }
+
+        .note:nth-child(1) { animation-delay: 0s; }
+        .note:nth-child(2) { animation-delay: 0.7s; }
+        .note:nth-child(3) { animation-delay: 1.4s; }
+
+        @keyframes noteFloat {
+            0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-30px) rotate(20deg); }
+        }
+
+        .overlay-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 16px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            letter-spacing: 1px;
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .overlay-toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        @media (max-width: 360px) {
+            .card { padding: 28px 20px; }
+            .title { font-size: 22px; }
+            .call-btn { font-size: 16px; padding: 14px 28px; }
+            .car-icon { font-size: 52px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-bg" id="customBg"></div>
+    <div class="custom-bg-overlay" id="customBgOverlay"></div>
+
+    <button class="music-toggle playing" id="musicToggle" title="音乐开关">🎵</button>
+
+    <div class="music-notes show" id="musicNotes">
+        <span class="note">♪</span>
+        <span class="note" style="margin-left:12px;">♫</span>
+        <span class="note" style="margin-left:24px;">♪</span>
+    </div>
+
+    <div class="overlay-toast" id="toast"></div>
+
+    <div class="container">
+        <div class="car-icon-wrapper">
+            <span class="car-icon">🚗</span>
+        </div>
+        <div class="card">
+            <h1 class="title">临时停靠，请多关照</h1>
+            <p class="subtitle">如有不便，敬请谅解</p>
+            <div class="divider"></div>
+            <div class="call-btn-wrapper">
+                <button class="call-btn" id="callBtn" onclick="makeCall()">
+                    <span class="phone-icon">📞</span>
+                    <span>拨打车主电话</span>
+                </button>
+            </div>
+            <p class="hint">点击按钮即可联系车主</p>
+        </div>
+    </div>
+
+    <!-- 嵌入数据（由打包工具自动填充） -->
+    <script id="embedded-config" type="application/json">
+__EMBED_DATA__
+    ___SCRIPT_END___
+
+    <script>
+        (function() {
+            let embeddedPhone = '';
+            let embeddedBg = '';
+            let embeddedMusic = '';
+            try {
+                const configEl = document.getElementById('embedded-config');
+                if (configEl && configEl.textContent.trim()) {
+                    const config = JSON.parse(configEl.textContent);
+                    embeddedPhone = config.phone || '';
+                    embeddedBg = config.bg || '';
+                    embeddedMusic = config.music || '';
+                }
+            } catch (e) {}
+
+            const params = new URLSearchParams(window.location.search);
+
+            const phone = embeddedPhone || params.get('phone') || '13800138000';
+
+            let bgUrl = embeddedBg;
+            if (!bgUrl) {
+                const urlBg = params.get('bg');
+                if (urlBg) {
+                    bgUrl = urlBg;
+                } else {
+                    try {
+                        const savedBg = localStorage.getItem('movecar_bg');
+                        if (savedBg) bgUrl = savedBg;
+                    } catch (e) {}
+                }
+            }
+
+            let musicUrl = embeddedMusic;
+            if (!musicUrl) {
+                const urlMusic = params.get('music');
+                if (urlMusic) {
+                    musicUrl = urlMusic;
+                } else {
+                    try {
+                        const savedMusic = localStorage.getItem('movecar_music');
+                        if (savedMusic) musicUrl = savedMusic;
+                    } catch (e) {}
+                }
+            }
+
+            window.makeCall = function() {
+                window.location.href = 'tel:' + phone;
+            };
+
+            if (bgUrl) {
+                const bgEl = document.getElementById('customBg');
+                const overlayEl = document.getElementById('customBgOverlay');
+                bgEl.style.backgroundImage = 'url(' + bgUrl + ')';
+                bgEl.style.display = 'block';
+                overlayEl.style.display = 'block';
+            }
+
+            let audioCtx = null;
+            let isPlaying = false;
+            let melodyInterval = null;
+            let customAudio = null;
+            const musicToggle = document.getElementById('musicToggle');
+            const musicNotes = document.getElementById('musicNotes');
+            const toast = document.getElementById('toast');
+
+            function getAudioContext() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                return audioCtx;
+            }
+
+            function playNote(ctx, freq, startTime, duration, type, gain) {
+                const osc = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, startTime);
+
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.05);
+                gainNode.gain.setValueAtTime(gain, startTime + duration * 0.7);
+                gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
+
+                osc.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            }
+
+            const melody = [
+                { note: 'G4', dur: 0.4 }, { note: 'E4', dur: 0.3 }, { note: 'G4', dur: 0.3 }, { note: 'A4', dur: 0.3 }, { note: 'G4', dur: 0.7 },
+                { note: 'E4', dur: 0.4 }, { note: 'C4', dur: 0.3 }, { note: 'D4', dur: 0.3 }, { note: 'E4', dur: 0.7 },
+                { note: 'E4', dur: 0.3 }, { note: 'D4', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'A3', dur: 0.3 }, { note: 'G3', dur: 0.8 },
+                { note: 'C4', dur: 0.4 }, { note: 'D4', dur: 0.3 }, { note: 'E4', dur: 0.7 },
+                { note: 'G4', dur: 0.3 }, { note: 'E4', dur: 0.3 }, { note: 'D4', dur: 0.3 }, { note: 'C4', dur: 0.7 },
+                { note: 'D4', dur: 0.3 }, { note: 'E4', dur: 0.3 }, { note: 'G4', dur: 0.3 }, { note: 'E4', dur: 0.3 }, { note: 'D4', dur: 0.8 },
+                { note: 'E4', dur: 0.3 }, { note: 'G4', dur: 0.3 }, { note: 'A4', dur: 0.7 },
+                { note: 'G4', dur: 0.3 }, { note: 'E4', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'D4', dur: 0.7 },
+                { note: 'D4', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'A3', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'D4', dur: 0.8 },
+                { note: 'E4', dur: 0.4 }, { note: 'G4', dur: 0.3 }, { note: 'A4', dur: 0.7 },
+                { note: 'G4', dur: 0.3 }, { note: 'E4', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'A3', dur: 0.7 },
+                { note: 'A3', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'D4', dur: 0.3 }, { note: 'C4', dur: 0.3 }, { note: 'A3', dur: 0.6 }, { note: 'G3', dur: 1.0 }
+            ];
+
+            const noteToFreq = {
+                'G3': 196.00, 'A3': 220.00, 'B3': 246.94, 'C4': 261.63, 'D4': 293.66,
+                'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 'C5': 523.25
+            };
+
+            function playMelody() {
+                if (!isPlaying) return;
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                let time = now;
+
+                melody.forEach(({ note, dur }) => {
+                    const freq = noteToFreq[note];
+                    if (freq) {
+                        playNote(ctx, freq, time, dur, 'sine', 0.12);
+                        playNote(ctx, freq * 2, time, dur, 'sine', 0.04);
+                        playNote(ctx, freq * 3, time, dur, 'sine', 0.02);
+                    }
+                    time += dur;
+                });
+
+                const totalDuration = melody.reduce((sum, m) => sum + m.dur, 0);
+                melodyInterval = setTimeout(playMelody, (totalDuration + 1.5) * 1000);
+            }
+
+            function stopMelody() {
+                if (melodyInterval) {
+                    clearTimeout(melodyInterval);
+                    melodyInterval = null;
+                }
+                if (audioCtx) {
+                    audioCtx.suspend();
+                }
+            }
+
+            function playCustomAudio(url) {
+                if (!customAudio) {
+                    customAudio = new Audio(url);
+                    customAudio.loop = true;
+                    customAudio.volume = 0.5;
+                }
+                customAudio.play().catch(() => {});
+            }
+
+            function stopCustomAudio() {
+                if (customAudio) {
+                    customAudio.pause();
+                    customAudio.currentTime = 0;
+                }
+            }
+
+            function startMusic() {
+                if (isPlaying) return;
+                isPlaying = true;
+
+                if (musicUrl) {
+                    playCustomAudio(musicUrl);
+                } else {
+                    getAudioContext();
+                    playMelody();
+                }
+
+                musicToggle.classList.add('playing');
+                musicToggle.textContent = '🎵';
+                musicNotes.classList.add('show');
+            }
+
+            function pauseMusic() {
+                if (!isPlaying) return;
+                isPlaying = false;
+                stopMelody();
+                stopCustomAudio();
+                musicToggle.classList.remove('playing');
+                musicToggle.textContent = '🔇';
+                musicNotes.classList.remove('show');
+            }
+
+            function toggleMusic() {
+                if (isPlaying) pauseMusic(); else startMusic();
+            }
+
+            musicToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleMusic();
+            });
+
+            function tryAutoPlay() {
+                if (musicUrl) {
+                    customAudio = new Audio(musicUrl);
+                    customAudio.loop = true;
+                    customAudio.volume = 0.5;
+                    customAudio.play().then(() => {
+                        isPlaying = true;
+                        musicToggle.classList.add('playing');
+                        musicToggle.textContent = '🎵';
+                        musicNotes.classList.add('show');
+                    }).catch(() => {
+                        showToast('轻触页面开启音乐 🎵');
+                    });
+                } else {
+                    try {
+                        getAudioContext();
+                        if (audioCtx.state === 'running') {
+                            isPlaying = true;
+                            playMelody();
+                            musicToggle.classList.add('playing');
+                            musicToggle.textContent = '🎵';
+                            musicNotes.classList.add('show');
+                        } else {
+                            showToast('轻触页面开启音乐 🎵');
+                        }
+                    } catch (e) {
+                        showToast('轻触页面开启音乐 🎵');
+                    }
+                }
+            }
+
+            function showToast(msg) {
+                toast.textContent = msg;
+                toast.classList.add('show');
+                setTimeout(() => { toast.classList.remove('show'); }, 2500);
+            }
+
+            document.addEventListener('click', function() {
+                if (!isPlaying) startMusic();
+            });
+
+            tryAutoPlay();
+
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    if (isPlaying) {
+                        stopMelody();
+                        stopCustomAudio();
+                    }
+                } else {
+                    if (isPlaying) {
+                        if (musicUrl) playCustomAudio(musicUrl);
+                        else { getAudioContext(); playMelody(); }
+                    }
+                }
+            });
+
+            console.log('🚗 挪车二维码页面已就绪');
+            console.log('📞 车主电话:', phone);
+            console.log('🎵 音乐:', musicUrl || '内置旋律');
+            console.log('🖼️ 背景:', bgUrl || '默认星空');
+        })();
+    </script>
+</body>
+</html>
+    </textarea>
+
+    <script>
+        (function() {
+            // ============ 全局变量 ============
+            let qrCode = null;
+            let bgDataUrl = '';
+            let musicDataUrl = '';
+            let generatedUrlStr = '';
+
+            const phoneInput = document.getElementById('phoneInput');
+            const bgFileInput = document.getElementById('bgFileInput');
+            const bgUrlInput = document.getElementById('bgUrlInput');
+            const bgUploadArea = document.getElementById('bgUploadArea');
+            const bgPreview = document.getElementById('bgPreview');
+            const bgFileName = document.getElementById('bgFileName');
+            const musicFileInput = document.getElementById('musicFileInput');
+            const musicUrlInput = document.getElementById('musicUrlInput');
+            const musicUploadArea = document.getElementById('musicUploadArea');
+            const musicFileName = document.getElementById('musicFileName');
+            const qrcodeDiv = document.getElementById('qrcode');
+            const urlDisplay = document.getElementById('urlDisplay');
+            const generatedUrl = document.getElementById('generatedUrl');
+            const qrActions = document.getElementById('qrActions');
+            const previewFrame = document.getElementById('previewFrame');
+            const toast = document.getElementById('toast');
+
+            // ============ 图片压缩（保持二维码URL简短） ============
+            function compressImage(file, maxWidth, quality, callback) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth) {
+                            height = (maxWidth / width) * height;
+                            width = maxWidth;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        callback(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // ============ 文件上传：背景图片（压缩后存 localStorage） ============
+            bgFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    showToast('请上传图片文件');
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('图片文件建议小于 5MB，否则二维码可能过密');
+                }
+
+                compressImage(file, 800, 0.7, function(compressed) {
+                    bgDataUrl = compressed;
+                    bgUploadArea.classList.add('has-file');
+                    bgFileName.textContent = '已选择: ' + file.name + ' (已压缩)';
+                    bgPreview.style.backgroundImage = 'url(' + bgDataUrl + ')';
+                    bgPreview.classList.add('show');
+                    bgUrlInput.value = '';
+                });
+            });
+
+            bgUrlInput.addEventListener('input', function() {
+                if (bgUrlInput.value) {
+                    bgDataUrl = '';
+                    bgFileInput.value = '';
+                    bgUploadArea.classList.remove('has-file');
+                    bgFileName.textContent = '';
+                    bgPreview.style.backgroundImage = 'url(' + bgUrlInput.value + ')';
+                    bgPreview.classList.add('show');
+                } else {
+                    bgPreview.classList.remove('show');
+                }
+            });
+
+            // ============ 文件上传：音乐转 Base64（存 localStorage） ============
+            musicFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!file.type.includes('audio/') && !file.name.endsWith('.mp3')) {
+                    showToast('请上传 MP3 音乐文件');
+                    return;
+                }
+
+                if (file.size > 3 * 1024 * 1024) {
+                    showToast('音乐文件建议小于 3MB，推荐使用 URL 方式');
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    musicDataUrl = ev.target.result;
+                    musicUploadArea.classList.add('has-file');
+                    musicFileName.textContent = '已选择: ' + file.name;
+                    musicUrlInput.value = '';
+                };
+                reader.readAsDataURL(file);
+            });
+
+            musicUrlInput.addEventListener('input', function() {
+                if (musicUrlInput.value) {
+                    musicDataUrl = '';
+                    musicFileInput.value = '';
+                    musicUploadArea.classList.remove('has-file');
+                    musicFileName.textContent = '已使用音乐 URL: ' + musicUrlInput.value.substring(0, 40) + (musicUrlInput.value.length > 40 ? '...' : '');
+                } else {
+                    musicFileName.textContent = '';
+                }
+            });
+
+            // ============ 生成二维码 ============
+            window.generateQR = function() {
+                const phone = phoneInput.value.trim();
+
+                if (!phone) {
+                    showToast('请先输入手机号码');
+                    phoneInput.focus();
+                    return;
+                }
+
+                if (!/^[\d\-+() ]{7,15}$/.test(phone)) {
+                    showToast('请输入有效的手机号码');
+                    phoneInput.focus();
+                    return;
+                }
+
+                // 确定最终的背景和音乐
+                const finalBgUrl = bgDataUrl || bgUrlInput.value.trim();
+                const finalMusicUrl = musicDataUrl || musicUrlInput.value.trim();
+
+                // ===== 将背景和音乐保存到 localStorage =====
+                // index.html 在同一域名下可以直接读取
+                try {
+                    if (finalBgUrl) {
+                        localStorage.setItem('movecar_bg', finalBgUrl);
+                    } else {
+                        localStorage.removeItem('movecar_bg');
+                    }
+                    if (finalMusicUrl) {
+                        localStorage.setItem('movecar_music', finalMusicUrl);
+                    } else {
+                        localStorage.removeItem('movecar_music');
+                    }
+                    localStorage.setItem('movecar_phone', phone);
+                } catch (e) {
+                    showToast('⚠️ 存储空间不足，背景/音乐数据可能无法保存');
+                }
+
+                // ===== 构建简短URL（仅包含手机号） =====
+                const baseUrl = getBaseUrl();
+                generatedUrlStr = baseUrl + '?phone=' + encodeURIComponent(phone);
+
+                // 如果 bg/music 是 URL（非 base64），也可以放入参数
+                const extraParams = [];
+                if (!bgDataUrl && bgUrlInput.value.trim()) {
+                    extraParams.push('bg=' + encodeURIComponent(bgUrlInput.value.trim()));
+                }
+                if (!musicDataUrl && musicUrlInput.value.trim()) {
+                    extraParams.push('music=' + encodeURIComponent(musicUrlInput.value.trim()));
+                }
+                if (extraParams.length > 0) {
+                    generatedUrlStr += '&' + extraParams.join('&');
+                }
+
+                // 生成二维码
+                qrcodeDiv.innerHTML = '';
+                qrCode = new QRCode(qrcodeDiv, {
+                    text: generatedUrlStr,
+                    width: 220,
+                    height: 220,
+                    colorDark: '#2c3e50',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+
+                // 显示 URL 和操作按钮
+                generatedUrl.textContent = generatedUrlStr;
+                urlDisplay.style.display = 'block';
+                qrActions.style.display = 'flex';
+
+                // 更新预览
+                updatePreview(phone, finalBgUrl, finalMusicUrl);
+
+                showToast('✅ 二维码已生成！扫码即可预览');
+            };
+
+            // ============ 获取基础 URL ============
+            function getBaseUrl() {
+                const currentUrl = window.location.href;
+                // 将 setup.html 替换为 index.html
+                const base = currentUrl.replace(/setup\.html.*$/, 'index.html');
+                // 如果当前是本地文件，则使用当前目录的 index.html
+                if (currentUrl.startsWith('file://')) {
+                    const dir = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+                    return dir + '/index.html';
+                }
+                return base;
+            }
+
+            // ============ 更新预览 ============
+            function updatePreview(phone, bgUrl, musicUrl) {
+                // 预览通过 URL 参数传递（同一域名下的 iframe 也可读 localStorage，但 URL 参数更可靠）
+                const params = new URLSearchParams();
+                params.set('phone', phone);
+                // URLSearchParams.set 和 toString 会自动处理编码，不要手动 encodeURIComponent
+                if (bgUrl) params.set('bg', bgUrl);
+                if (musicUrl) params.set('music', musicUrl);
+
+                const previewUrl = getBaseUrl() + '?' + params.toString();
+                previewFrame.src = previewUrl;
+            }
+
+            // ============ 下载二维码 ============
+            window.downloadQR = function() {
+                const canvas = qrcodeDiv.querySelector('canvas');
+                if (!canvas) {
+                    showToast('请先生成二维码');
+                    return;
+                }
+                const link = document.createElement('a');
+                link.download = '挪车二维码.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('✅ 二维码已下载');
+            };
+
+            // ============ 复制链接 ============
+            window.copyUrl = function() {
+                if (!generatedUrlStr) {
+                    showToast('请先生成二维码');
+                    return;
+                }
+                navigator.clipboard.writeText(generatedUrlStr).then(() => {
+                    showToast('✅ 链接已复制到剪贴板');
+                }).catch(() => {
+                    // 降级方案
+                    const textarea = document.createElement('textarea');
+                    textarea.value = generatedUrlStr;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast('✅ 链接已复制到剪贴板');
+                });
+            };
+
+            // ============ 打包下载自包含展示页 ============
+            window.downloadPackagedHTML = async function() {
+                const phone = phoneInput.value.trim();
+                const finalBg = bgDataUrl || bgUrlInput.value.trim();
+                const finalMusic = musicDataUrl || musicUrlInput.value.trim();
+
+                if (!phone) {
+                    showToast('⚠️ 请先输入手机号码');
+                    phoneInput.focus();
+                    return;
+                }
+
+                showToast('⏳ 正在生成自包含页面...');
+
+                try {
+                    // 直接使用内嵌的模板字符串（不依赖 fetch / 同目录文件，本地 file:// 也能用）
+                    const templateEl = document.getElementById('indexTemplate');
+                    if (!templateEl || !templateEl.value) {
+                        showToast('❌ 模板丢失，请刷新页面后重试');
+                        return;
+                    }
+                    let html = templateEl.value;
+
+                    // 构建嵌入数据 JSON（手机号、背景、音乐）
+                    const embedData = JSON.stringify({
+                        bg: finalBg,
+                        music: finalMusic,
+                        phone: phone
+                    }, null, 4);
+
+                    // 替换模板中的占位符
+                    if (!html.includes('__EMBED_DATA__')) {
+                        showToast('❌ 模板缺少占位符，请刷新页面后重试');
+                        return;
+                    }
+                    html = html.replace('__EMBED_DATA__', embedData);
+                    // 把脚本占位符还原为真实的 script 结束标签（避免 setup.html 自身 HTML 解析时误闭合）
+                    // 注意：必须用字符串拼接写法，绝不能在源码中直接出现 script 结束标签字符串
+                    html = html.replace(/___SCRIPT_END___/g, '</scr' + 'ipt>');
+
+                    // 触发下载
+                    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = 'index.html';
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+
+                    const bgInfo = finalBg ? (bgDataUrl ? '已嵌入背景图' : '已嵌入背景URL') : '无自定义背景';
+                    const musicInfo = finalMusic ? (musicDataUrl ? '已嵌入音乐' : '已嵌入音乐URL') : '使用内置旋律';
+                    showToast('✅ 下载成功！' + bgInfo + ' | ' + musicInfo);
+                } catch (err) {
+                    console.error('打包失败:', err);
+                    showToast('❌ 打包失败: ' + err.message);
+                }
+            };
+
+            // ============ Toast ============
+            function showToast(msg) {
+                toast.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toast._timeout);
+                toast._timeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            }
+
+            // ============ 初始化 ============
+            // 从 localStorage 恢复之前的设置
+            const savedPhone = localStorage.getItem('movecar_phone');
+            const savedBg = localStorage.getItem('movecar_bg');
+            const savedMusic = localStorage.getItem('movecar_music');
+
+            if (savedPhone) {
+                phoneInput.value = savedPhone;
+            }
+            if (savedBg) {
+                bgDataUrl = savedBg;
+                bgUploadArea.classList.add('has-file');
+                bgFileName.textContent = '已保存的背景';
+                bgPreview.style.backgroundImage = 'url(' + savedBg + ')';
+                bgPreview.classList.add('show');
+            }
+            if (savedMusic) {
+                musicDataUrl = savedMusic;
+                musicUploadArea.classList.add('has-file');
+                musicFileName.textContent = '已保存的音乐';
+            }
+
+            // 监听手机号变化，自动保存
+            phoneInput.addEventListener('change', function() {
+                localStorage.setItem('movecar_phone', phoneInput.value.trim());
+            });
+
+            // 页面加载时更新预览
+            if (savedPhone) {
+                updatePreview(savedPhone, savedBg || '', savedMusic || '');
+            }
+        })();
+    </script>
+</body>
+</html>
